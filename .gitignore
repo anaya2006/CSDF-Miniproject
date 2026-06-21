@@ -1,0 +1,30 @@
+# Virtual environment
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Uploaded evidence files (don't push these)
+static/uploads/
+static/frames/
+
+# Test videos (large files, skip them)
+test_videos/
+
+# VS Code / IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Extracted unpacked folders
+ug_unpacked/
+tmpl_unpacked/
+final_doc_unpacked/
