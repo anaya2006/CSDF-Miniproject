@@ -1,4 +1,4 @@
-# CyberTriage — Video Forensics Analysis Tool
+# Digital Forensics Tool for Video
 
 > **CY-2002/3006 Digital Forensics | Semester Project — Tool #3: Cyber Triage Tool for Video Analysis**
 
@@ -19,6 +19,16 @@ CyberTriage is a web-based digital forensics tool for comprehensive video eviden
 The tool runs **entirely locally** — no data ever leaves the investigator's machine. Built with Python (Flask) on the backend and vanilla HTML/CSS/JS on the frontend.
 
 ---
+
+## What's new
+
+- **Light-mode, Chrome-friendly UI** with a single drag-and-drop upload. Upload the original first, then the tampered copy on the same page; each upload is kept in an evidence list.
+- **Frame analysis**: every frame is scanned for frame-to-frame change, brightness and sharpness; scene cuts, splices and duplicate frames are flagged. Click any chart to jump the player.
+- **Audio-level analysis**: peak/RMS dBFS, crest factor, dynamic range, clipping, silence, DC offset, abrupt level jumps, digital-silence gaps, waveform and spectrum.
+- **Compare uploads** (original vs tampered): hashes, metadata diff, per-frame SSIM timeline, scrubbable side-by-side with a difference heat-map, audio level/spectrum comparison, and an automatic verdict with findings (trim, overlay, brightness shift, volume change, audio replaced...).
+- **Chrome playback**: a temporary H.264/AAC preview is created via the bundled ffmpeg (`imageio-ffmpeg`) so MKV/AVI/WMV and OpenCV `mp4v` files play in Chrome. Analysis always uses your original file.
+- The server now binds to `127.0.0.1` only (local use).
+
 
 ## Features
 
@@ -54,6 +64,7 @@ opencv-python-headless>=4.8.0
 Pillow>=10.0.0
 mutagen>=1.47.0
 numpy>=1.24.0
+imageio-ffmpeg>=0.4.9
 ```
 
 All listed in `requirements.txt`.

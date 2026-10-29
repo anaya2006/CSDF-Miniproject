@@ -1,972 +1,145 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>CyberTriage — Video Forensics Tool</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700;900&display=swap"/>
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digital Forensics Tool for Video</title>
 <style>
-:root {
-  --bg:#0a0c10; --sur:#0f1219; --sur2:#161b26; --brd:#1e2a3a;
-  --acc:#00d4ff; --acc2:#ff6b35; --acc3:#39ff14;
-  --warn:#ffbe00; --danger:#ff3860; --purple:#c678dd;
-  --text:#c8d8e8; --dim:#5a7080;
-  --mono:'Share Tech Mono',monospace; --sans:'Exo 2',sans-serif;
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,212,255,.012) 2px,rgba(0,212,255,.012) 4px);pointer-events:none;z-index:9999}
-
-/* ── HEADER ── */
-header{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.75rem;border-bottom:1px solid var(--brd);background:linear-gradient(135deg,#0a0c10,#0d1520);position:sticky;top:0;z-index:100}
-.logo{display:flex;align-items:center;gap:.9rem}
-.logo-hex{width:40px;height:40px;background:var(--acc);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);display:flex;align-items:center;justify-content:center;animation:pulse 3s infinite}
-@keyframes pulse{0%,100%{box-shadow:0 0 8px var(--acc)}50%{box-shadow:0 0 28px var(--acc),0 0 55px var(--acc)}}
-.logo-text{font-size:1.4rem;font-weight:900;letter-spacing:.08em;color:var(--acc)}
-.logo-sub{font-family:var(--mono);font-size:.6rem;color:var(--dim);margin-top:-3px}
-.hdr-r{font-family:var(--mono);font-size:.72rem;color:var(--dim);text-align:right}
-
-/* ── LAYOUT ── */
-.app{display:grid;grid-template-columns:290px 1fr;min-height:calc(100vh - 62px - 24px)}
-
-/* ── SIDEBAR ── */
-.sidebar{background:var(--sur);border-right:1px solid var(--brd);padding:1.25rem .9rem;display:flex;flex-direction:column;gap:1.25rem;overflow-y:auto}
-.sec-lbl{font-family:var(--mono);font-size:.62rem;color:var(--acc);letter-spacing:.15em;text-transform:uppercase;margin-bottom:.45rem;display:flex;align-items:center;gap:.4rem}
-.sec-lbl::after{content:'';flex:1;height:1px;background:var(--brd)}
-
-/* upload */
-.drop{border:1px dashed var(--brd);border-radius:6px;padding:1.2rem .9rem;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
-.drop:hover,.drop.over{border-color:var(--acc);background:rgba(0,212,255,.04)}
-.drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
-.drop-icon{font-size:1.8rem;margin-bottom:.35rem}
-.drop-txt{font-size:.78rem;color:var(--dim);line-height:1.5}
-.drop-fmt{font-family:var(--mono);font-size:.58rem;color:var(--dim);margin-top:.4rem}
-
-/* file badge */
-.fbadge{background:var(--sur2);border:1px solid var(--brd);border-radius:6px;padding:.65rem;font-family:var(--mono);font-size:.68rem}
-.fbadge .fname{color:var(--acc);font-weight:bold;word-break:break-all;margin-bottom:.45rem}
-.mr{display:flex;justify-content:space-between;color:var(--dim);margin-bottom:2px}
-.mv{color:var(--text)}
-
-/* mode tabs */
-.mtabs{display:flex;gap:.4rem;margin-bottom:.65rem}
-.mtab{flex:1;padding:.38rem;background:var(--sur2);border:1px solid var(--brd);color:var(--dim);font-family:var(--mono);font-size:.68rem;cursor:pointer;border-radius:4px;transition:all .15s}
-.mtab.active{border-color:var(--acc);color:var(--acc);background:rgba(0,212,255,.08)}
-
-/* inputs */
-.inp{background:var(--sur2);border:1px solid var(--brd);color:var(--text);font-family:var(--mono);font-size:.72rem;padding:.38rem .55rem;border-radius:4px;outline:none;width:100%}
-.inp:focus{border-color:var(--acc)}
-.inp-row{display:flex;gap:.35rem;margin-bottom:.45rem}
-.chips{display:flex;flex-wrap:wrap;gap:.25rem;margin-bottom:.45rem;min-height:20px}
-.chip{background:rgba(0,212,255,.1);border:1px solid var(--acc);color:var(--acc);font-family:var(--mono);font-size:.62rem;padding:.12rem .38rem;border-radius:3px;display:flex;align-items:center;gap:.25rem}
-.chip .x{cursor:pointer;opacity:.6}
-.chip .x:hover{opacity:1;color:var(--danger)}
-.ilbl{font-family:var(--mono);font-size:.62rem;color:var(--dim);margin-bottom:.18rem}
-
-/* buttons */
-.btn{width:100%;padding:.5rem;border:none;border-radius:4px;font-family:var(--sans);font-weight:700;font-size:.78rem;cursor:pointer;transition:all .15s;letter-spacing:.04em}
-.btn-pri{background:var(--acc);color:#000}
-.btn-pri:hover{background:#00b8db;box-shadow:0 0 14px rgba(0,212,255,.4)}
-.btn-warn{background:var(--warn);color:#000}
-.btn-warn:hover{background:#e0a800}
-.btn:disabled{opacity:.4;cursor:not-allowed}
-
-/* inv fields */
-.ifield{background:var(--sur2);border:1px solid var(--brd);border-radius:4px;padding:.38rem .55rem;color:var(--text);font-family:var(--mono);font-size:.7rem;width:100%;outline:none;margin-bottom:.38rem}
-.ifield:focus{border-color:var(--acc)}
-
-/* ── MAIN ── */
-.main{padding:1.25rem;overflow-y:auto}
-.tabs{display:flex;gap:0;border-bottom:1px solid var(--brd);margin-bottom:1.25rem}
-.tab{padding:.65rem 1.1rem;background:none;border:none;font-family:var(--sans);font-size:.82rem;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
-.tab:hover{color:var(--text)}
-.tab.active{color:var(--acc);border-bottom-color:var(--acc)}
-.panel{display:none}
-.panel.active{display:block}
-
-/* ── PLAYER ── */
-.pw{background:#000;border:1px solid var(--brd);border-radius:8px;overflow:hidden}
-#vid{width:100%;display:block;max-height:58vh;background:#000}
-.no-vid{display:flex;align-items:center;justify-content:center;height:230px;flex-direction:column;gap:.65rem;color:var(--dim);font-family:var(--mono);font-size:.82rem}
-.no-vid .ic{font-size:2.2rem;opacity:.3}
-.pctrl{display:flex;align-items:center;gap:.65rem;background:var(--sur2);padding:.65rem .9rem;border-top:1px solid var(--brd)}
-.cb{background:none;border:1px solid var(--brd);color:var(--text);width:34px;height:34px;border-radius:4px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.cb:hover{border-color:var(--acc);color:var(--acc)}
-.prg-wrap{flex:1;display:flex;flex-direction:column;gap:.2rem}
-.prg{width:100%;height:4px;appearance:none;cursor:pointer;border-radius:2px;background:var(--brd)}
-.prg::-webkit-slider-thumb{appearance:none;width:12px;height:12px;border-radius:50%;background:var(--acc)}
-.tdsp{font-family:var(--mono);font-size:.68rem;color:var(--dim);white-space:nowrap}
-.vol{width:65px;height:4px;appearance:none;border-radius:2px;background:var(--brd)}
-.vol::-webkit-slider-thumb{appearance:none;width:10px;height:10px;border-radius:50%;background:var(--dim)}
-.spd{background:var(--sur2);border:1px solid var(--brd);color:var(--text);font-family:var(--mono);font-size:.68rem;padding:.18rem .35rem;border-radius:3px}
-
-/* ── FRAMES ── */
-.fr-tb{display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;gap:.9rem;flex-wrap:wrap}
-.fr-cnt{font-family:var(--mono);font-size:.78rem;color:var(--dim)}
-.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.9rem}
-.fcard{background:var(--sur2);border:1px solid var(--brd);border-radius:6px;overflow:hidden;transition:border-color .15s}
-.fcard:hover{border-color:var(--acc)}
-.fimg{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;cursor:zoom-in}
-.fmeta{padding:.45rem .65rem;font-family:var(--mono);font-size:.62rem;color:var(--dim);display:flex;justify-content:space-between;align-items:center}
-.fts{color:var(--acc3)}
-.fdl{color:var(--dim);text-decoration:none}
-.fdl:hover{color:var(--acc)}
-.empty-msg{text-align:center;padding:2.5rem;color:var(--dim);font-family:var(--mono);font-size:.82rem}
-
-/* ── STEG TAB ── */
-.steg-header{margin-bottom:1.1rem}
-
-/* stat cards row — now 4 cards: HIGH · MEDIUM · INFO · FILES FOUND */
-.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem;margin-bottom:1rem}
-.stat-card{background:var(--sur2);border:1px solid var(--brd);border-radius:6px;padding:.9rem .75rem;text-align:center;cursor:pointer;transition:all .2s;position:relative;user-select:none}
-.stat-card:hover{border-color:currentColor;transform:translateY(-2px)}
-.stat-card.active-filter{box-shadow:0 0 0 2px currentColor}
-.stat-card.HIGH{color:var(--danger)}
-.stat-card.MEDIUM{color:var(--warn)}
-.stat-card.INFO{color:var(--dim)}
-.stat-card.FILES{color:var(--acc3)}
-.stat-num{font-size:2rem;font-weight:900;font-family:var(--mono);line-height:1}
-.stat-lbl{font-family:var(--mono);font-size:.6rem;color:inherit;opacity:.7;margin-top:.25rem;letter-spacing:.08em}
-.stat-hint{font-family:var(--mono);font-size:.55rem;opacity:.5;margin-top:.15rem}
-
-/* filter toolbar */
-.filter-bar{display:flex;align-items:center;gap:.65rem;margin-bottom:.9rem;flex-wrap:wrap}
-.filter-lbl{font-family:var(--mono);font-size:.65rem;color:var(--dim)}
-.sort-select{background:var(--sur2);border:1px solid var(--brd);color:var(--text);font-family:var(--mono);font-size:.68rem;padding:.3rem .5rem;border-radius:4px;outline:none}
-.sort-select:focus{border-color:var(--acc)}
-.search-inp{background:var(--sur2);border:1px solid var(--brd);color:var(--text);font-family:var(--mono);font-size:.7rem;padding:.3rem .55rem;border-radius:4px;outline:none;width:180px}
-.search-inp:focus{border-color:var(--acc)}
-.clr-btn{background:none;border:1px solid var(--brd);color:var(--dim);font-family:var(--mono);font-size:.65rem;padding:.3rem .6rem;border-radius:4px;cursor:pointer}
-.clr-btn:hover{border-color:var(--danger);color:var(--danger)}
-.result-count{font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-left:auto}
-
-/* findings */
-.finding{background:var(--sur2);border:1px solid var(--brd);border-radius:6px;padding:.9rem;margin-bottom:.65rem;border-left:3px solid var(--dim)}
-.finding.HIGH{border-left-color:var(--danger)}
-.finding.MEDIUM{border-left-color:var(--warn)}
-.finding.INFO{border-left-color:var(--dim)}
-.finding.FILES{border-left-color:var(--acc3)}
-.finding-hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.45rem}
-.finding-type{font-weight:700;font-size:.83rem}
-.finding.HIGH .finding-type{color:var(--danger)}
-.finding.MEDIUM .finding-type{color:var(--warn)}
-.finding.INFO .finding-type{color:var(--dim)}
-.finding.FILES .finding-type{color:var(--acc3)}
-.badges{display:flex;gap:.3rem;align-items:center;flex-wrap:wrap}
-.sev-badge{font-family:var(--mono);font-size:.58rem;padding:.13rem .38rem;border-radius:3px;font-weight:bold;white-space:nowrap}
-.sev-HIGH{background:rgba(255,56,96,.12);color:var(--danger);border:1px solid var(--danger)}
-.sev-MEDIUM{background:rgba(255,190,0,.12);color:var(--warn);border:1px solid var(--warn)}
-.sev-INFO{background:rgba(90,112,128,.12);color:var(--dim);border:1px solid var(--dim)}
-.cat-badge{font-family:var(--mono);font-size:.55rem;padding:.1rem .35rem;border-radius:3px;background:rgba(255,255,255,.05);color:var(--dim);border:1px solid var(--brd)}
-.finding-desc{font-size:.8rem;color:var(--text);line-height:1.55;margin-bottom:.4rem}
-.finding-ctx{font-size:.73rem;color:var(--dim);font-style:italic;line-height:1.45;margin-bottom:.4rem}
-.finding-detail{font-family:var(--mono);font-size:.63rem;color:var(--dim);margin-bottom:.2rem}
-.finding-detail span{color:var(--acc)}
-.finding-detail .tag-val{color:var(--text);word-break:break-all}
-.recover-btn{background:rgba(57,255,20,.08);border:1px solid var(--acc3);color:var(--acc3);font-family:var(--mono);font-size:.68rem;padding:.28rem .7rem;border-radius:3px;cursor:pointer;margin-top:.5rem;transition:all .15s}
-.recover-btn:hover{background:rgba(57,255,20,.18)}
-.recover-result{margin-top:.45rem;font-family:var(--mono);font-size:.7rem}
-.recover-ok{color:var(--acc3)}
-.recover-err{color:var(--danger)}
-
-/* recovered files panel */
-.recovered-panel{background:var(--sur2);border:1px solid var(--acc3);border-radius:6px;padding:.9rem;margin-top:1rem;display:none}
-.recovered-panel.show{display:block}
-.recovered-title{font-family:var(--mono);font-size:.7rem;color:var(--acc3);letter-spacing:.1em;margin-bottom:.65rem;display:flex;align-items:center;gap:.5rem}
-.rec-file{display:flex;align-items:center;gap:.75rem;padding:.45rem .5rem;border:1px solid var(--brd);border-radius:4px;margin-bottom:.35rem;background:rgba(57,255,20,.04)}
-.rec-icon{font-size:1.2rem}
-.rec-info{flex:1;font-family:var(--mono);font-size:.68rem}
-.rec-name{color:var(--acc3);font-weight:bold}
-.rec-size{color:var(--dim);font-size:.6rem}
-.rec-dl{color:var(--acc);text-decoration:none;font-size:.7rem}
-.rec-dl:hover{color:var(--acc3)}
-
-/* ── METADATA TAB ── */
-.meta-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.9rem}
-.mcard{background:var(--sur2);border:1px solid var(--brd);border-radius:6px;padding:.9rem}
-.mcard-full{grid-column:span 2}
-.mcard h3{font-family:var(--mono);font-size:.65rem;color:var(--acc);letter-spacing:.12em;margin-bottom:.65rem;display:flex;align-items:center;gap:.4rem}
-.mcard h3::after{content:'';flex:1;height:1px;background:var(--brd)}
-.mtbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.7rem}
-.mtbl td{padding:.28rem .4rem;vertical-align:top}
-.mtbl td:first-child{color:var(--dim);width:42%;white-space:nowrap}
-.mtbl td:last-child{color:var(--text);word-break:break-all}
-.mtbl tr:hover td{background:rgba(0,212,255,.025)}
-.hash-val{color:var(--acc) !important;font-size:.62rem !important}
-.meta-tag-val{max-height:60px;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transition:max-height .3s}
-.meta-tag-val.expanded{max-height:300px}
-.meta-pill{display:inline-block;background:rgba(0,212,255,.08);border:1px solid var(--brd);border-radius:3px;padding:.05rem .3rem;font-size:.6rem;color:var(--acc);margin-left:.3rem}
-
-/* ── REPORT ── */
-.rfields{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:.9rem}
-.rtarea{width:100%;background:var(--sur2);border:1px solid var(--brd);color:var(--text);font-family:var(--mono);font-size:.72rem;padding:.55rem;border-radius:4px;outline:none;resize:vertical;min-height:70px;grid-column:span 2}
-.rtarea:focus{border-color:var(--acc)}
-.rpre{background:var(--sur2);border:1px solid var(--brd);border-radius:6px;padding:1.1rem;font-family:var(--mono);font-size:.7rem;line-height:1.75;white-space:pre-wrap;max-height:480px;overflow-y:auto}
-
-/* ── MODAL ── */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:999}
-.modal.open{display:flex}
-.modal img{max-width:90vw;max-height:90vh;border:1px solid var(--brd);border-radius:4px}
-
-/* ── TOAST ── */
-#toast{position:fixed;bottom:1.4rem;right:1.4rem;background:var(--sur2);border:1px solid var(--acc);padding:.65rem 1.1rem;border-radius:6px;font-family:var(--mono);font-size:.75rem;color:var(--acc);z-index:9999;opacity:0;transform:translateY(8px);transition:all .22s;pointer-events:none}
-#toast.show{opacity:1;transform:translateY(0)}
-#toast.err{border-color:var(--danger);color:var(--danger)}
-
-/* ── LOADING ── */
-.loading{position:fixed;inset:0;background:rgba(10,12,16,.82);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:998}
-.loading.show{display:flex}
-.spin{width:38px;height:38px;border:3px solid rgba(0,212,255,.15);border-top-color:var(--acc);border-radius:50%;animation:spin .6s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.load-txt{font-family:var(--mono);color:var(--acc);margin-top:.9rem;font-size:.88rem}
-.load-sub{font-family:var(--mono);color:var(--dim);font-size:.72rem;margin-top:.25rem}
-
-/* ── STATUS BAR ── */
-.sbar{position:fixed;bottom:0;left:0;right:0;height:24px;background:var(--sur);border-top:1px solid var(--brd);display:flex;align-items:center;padding:0 .9rem;gap:1.25rem;font-family:var(--mono);font-size:.62rem;color:var(--dim);z-index:50}
-.si{display:flex;align-items:center;gap:.3rem}
-.dot{width:6px;height:6px;border-radius:50%;background:var(--dim)}
-.dot.g{background:var(--acc3);box-shadow:0 0 5px var(--acc3)}
-.dot.r{background:var(--danger)}
-.dot.y{background:var(--warn)}
-</style>
-</head>
-<body>
-
-<header>
-  <div class="logo">
-    <div class="logo-hex">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5">
-        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-      </svg>
-    </div>
-    <div>
-      <div class="logo-text">CYBERTRIAGE</div>
-      <div class="logo-sub">VIDEO FORENSICS ANALYSIS SYSTEM v2.0</div>
-    </div>
-  </div>
-  <div class="hdr-r">
-    <div>CY-2002/3006 Digital Forensics</div>
-    <div id="clock" style="color:var(--acc)">--:--:-- UTC</div>
-  </div>
-</header>
-
-<div class="loading" id="ld">
-  <div class="spin"></div>
-  <div class="load-txt" id="ld-txt">Processing…</div>
-  <div class="load-sub" id="ld-sub">Please wait</div>
-</div>
-
-<div class="modal" id="modal" onclick="closeModal()">
-  <img id="modal-img" src="" alt=""/>
-</div>
-
-<div class="app">
-
-  <!-- ── SIDEBAR ── -->
-  <aside class="sidebar">
-
-    <!-- Evidence Input -->
-    <div>
-      <div class="sec-lbl">Evidence Input</div>
-      <div class="drop" id="drop">
-        <input type="file" id="finput" accept="video/*,.mkv,.ts,.mts"/>
-        <div class="drop-icon">📹</div>
-        <div class="drop-txt">Drop video here or click to browse</div>
-        <div class="drop-fmt">MP4 · AVI · MOV · MKV · WMV · FLV · WebM · MPEG · 3GP · TS</div>
-      </div>
-      <div id="fbadge" style="display:none;margin-top:.55rem"></div>
-    </div>
-
-    <!-- Frame Extraction -->
-    <div id="sec-frames" style="display:none">
-      <div class="sec-lbl">Frame Extraction</div>
-      <div class="mtabs">
-        <button class="mtab active" id="mode-ts" onclick="setMode('timestamps')">Timestamps</button>
-        <button class="mtab" id="mode-int" onclick="setMode('interval')">Interval</button>
-      </div>
-      <div id="ts-area">
-        <div class="inp-row">
-          <input class="inp" id="ts-inp" placeholder="e.g. 10, 1:30, 2:45"/>
-          <button class="mtab" style="flex:0;padding:.35rem .55rem" onclick="addTs()">+</button>
-        </div>
-        <div class="chips" id="chips"></div>
-      </div>
-      <div id="int-area" style="display:none">
-        <div class="ilbl">Interval (seconds)</div>
-        <input class="inp" id="int-inp" type="number" value="10" min="1" max="3600" style="margin-bottom:.45rem"/>
-      </div>
-      <button class="btn btn-pri" onclick="extractFrames()">⬡ Extract Frames</button>
-    </div>
-
-    <!-- Steganography -->
-    <div id="sec-steg" style="display:none">
-      <div class="sec-lbl">Steganography</div>
-      <button class="btn btn-warn" onclick="analyzeSteg()">🔍 Analyze for Hidden Data</button>
-    </div>
-
-    <!-- Case Info -->
-    <div id="sec-inv" style="display:none">
-      <div class="sec-lbl">Case Information</div>
-      <div class="ilbl">Investigator Name</div>
-      <input class="ifield" id="inv-name" placeholder="Your name"/>
-      <div class="ilbl">Case Number</div>
-      <input class="ifield" id="case-num" placeholder="e.g. DF-2025-001"/>
-      <button class="btn btn-pri" onclick="genReport()">📄 Generate Report</button>
-    </div>
-
-  </aside>
-
-  <!-- ── MAIN PANEL ── -->
-  <main class="main">
-    <div class="tabs">
-      <button class="tab active" onclick="sw('player')">▶ Player</button>
-      <button class="tab" onclick="sw('frames')">🖼 Frames <span id="fbadge-cnt"></span></button>
-      <button class="tab" onclick="sw('steg')">🔐 Steganography</button>
-      <button class="tab" onclick="sw('meta')">📊 Metadata</button>
-      <button class="tab" onclick="sw('report')">📄 Report</button>
-    </div>
-
-    <!-- PLAYER -->
-    <div class="panel active" id="panel-player">
-      <div class="pw">
-        <div class="no-vid" id="no-vid"><div class="ic">📹</div><div>Load a video file to begin analysis</div></div>
-        <video id="vid" style="display:none" preload="metadata"></video>
-        <div class="pctrl" id="pctrl" style="display:none">
-          <button class="cb" id="pbtn" onclick="togglePlay()">▶</button>
-          <button class="cb" onclick="skip(-10)" title="-10s">⏮</button>
-          <button class="cb" onclick="skip(10)" title="+10s">⏭</button>
-          <div class="prg-wrap">
-            <input type="range" class="prg" id="prg" value="0" min="0" max="100" step="0.1" oninput="seek(this.value)"/>
-            <div class="tdsp"><span id="cur">0:00</span> / <span id="dur">0:00</span></div>
-          </div>
-          <span style="font-size:.85rem">🔊</span>
-          <input type="range" class="vol" id="vol" value="100" min="0" max="100" oninput="setVol(this.value)"/>
-          <select class="spd" onchange="setSpd(this.value)">
-            <option value="0.5">0.5×</option>
-            <option value="1" selected>1×</option>
-            <option value="1.5">1.5×</option>
-            <option value="2">2×</option>
-          </select>
-          <button class="cb" onclick="captureNow()" title="Capture current frame timestamp">📸</button>
-        </div>
-      </div>
-      <div style="margin-top:.6rem;font-family:var(--mono);font-size:.67rem;color:var(--dim);padding:.45rem .7rem;background:var(--sur);border-radius:4px;border:1px solid var(--brd)">
-        ⚠ FORENSIC NOTICE: Original evidence file is never modified. All analysis is non-destructive. Hash values are computed at upload.
-      </div>
-    </div>
-
-    <!-- FRAMES -->
-    <div class="panel" id="panel-frames">
-      <div class="fr-tb">
-        <div class="fr-cnt" id="fr-cnt">No frames extracted yet</div>
-        <button class="btn btn-pri" style="width:auto;padding:.38rem .9rem;font-size:.72rem" onclick="dlAll()" id="dl-all" style="display:none">⬇ Download All</button>
-      </div>
-      <div class="fgrid" id="fgrid">
-        <div class="empty-msg" style="grid-column:1/-1">Use the sidebar to extract frames from the loaded video.</div>
-      </div>
-    </div>
-
-    <!-- STEGANOGRAPHY -->
-    <div class="panel" id="panel-steg">
-      <div id="steg-empty" style="text-align:center;padding:2.5rem;color:var(--dim);font-family:var(--mono)">
-        Run steganography analysis from the sidebar to detect hidden data.
-      </div>
-
-      <div id="steg-content" style="display:none">
-        <!-- stat cards -->
-        <div class="stat-row">
-          <div class="stat-card HIGH" id="sc-high" onclick="filterSev('HIGH')" title="Click to filter HIGH severity">
-            <div class="stat-num" id="cnt-high">0</div>
-            <div class="stat-lbl">HIGH SEVERITY</div>
-            <div class="stat-hint">Click to filter</div>
-          </div>
-          <div class="stat-card MEDIUM" id="sc-med" onclick="filterSev('MEDIUM')" title="Click to filter MEDIUM severity">
-            <div class="stat-num" id="cnt-med">0</div>
-            <div class="stat-lbl">MEDIUM SEVERITY</div>
-            <div class="stat-hint">Click to filter</div>
-          </div>
-          <div class="stat-card INFO" id="sc-info" onclick="filterSev('INFO')" title="Click to filter INFO">
-            <div class="stat-num" id="cnt-info">0</div>
-            <div class="stat-lbl">INFO / ERRORS</div>
-            <div class="stat-hint">Click to filter</div>
-          </div>
-          <div class="stat-card FILES" id="sc-files" onclick="toggleRecoveredPanel()" title="Click to show recovered files">
-            <div class="stat-num" id="cnt-files">0</div>
-            <div class="stat-lbl">FILES FOUND</div>
-            <div class="stat-hint">Click to view</div>
-          </div>
-        </div>
-
-        <!-- recovered files panel (hidden by default) -->
-        <div class="recovered-panel" id="recovered-panel">
-          <div class="recovered-title">
-            <span style="font-size:1rem">📂</span>
-            RECOVERED FILES
-          </div>
-          <div id="recovered-list">
-            <div style="color:var(--dim);font-family:var(--mono);font-size:.72rem">No files recovered yet. Use the Attempt Recovery buttons below.</div>
-          </div>
-        </div>
-
-        <!-- filter toolbar -->
-        <div class="filter-bar">
-          <span class="filter-lbl">SORT BY</span>
-          <select class="sort-select" id="sort-sel" onchange="applyFilters()">
-            <option value="severity">Severity (High→Low)</option>
-            <option value="type">Type A→Z</option>
-            <option value="category">Category</option>
-          </select>
-          <span class="filter-lbl" style="margin-left:.3rem">SEARCH</span>
-          <input class="search-inp" id="search-inp" placeholder="keyword…" oninput="applyFilters()"/>
-          <button class="clr-btn" onclick="clearFilters()">✕ Clear</button>
-          <span class="result-count" id="result-count"></span>
-        </div>
-
-        <!-- findings list -->
-        <div id="findings-list"></div>
-      </div>
-    </div>
-
-    <!-- METADATA -->
-    <div class="panel" id="panel-meta">
-      <div id="meta-empty" style="text-align:center;padding:2.5rem;color:var(--dim);font-family:var(--mono)">
-        Load a video to view its metadata.
-      </div>
-      <div class="meta-grid" id="meta-grid" style="display:none"></div>
-    </div>
-
-    <!-- REPORT -->
-    <div class="panel" id="panel-report">
-      <div id="rep-empty" style="text-align:center;padding:2.5rem;color:var(--dim);font-family:var(--mono)">
-        Complete analysis and generate report from the sidebar.
-      </div>
-      <div id="rep-content" style="display:none">
-        <div class="rpre" id="rep-json"></div>
-        <div style="margin-top:.9rem;display:flex;gap:.65rem">
-          <a id="rep-dl" style="display:none">
-            <button class="btn btn-pri" style="width:auto;padding:.45rem 1.1rem">⬇ Download JSON Report</button>
-          </a>
-        </div>
-      </div>
-    </div>
-
-  </main>
-</div>
-
-<div class="sbar">
-  <div class="si"><div class="dot g"></div><span>READY</span></div>
-  <div class="si"><div class="dot" id="dot-vid"></div><span id="st-vid">NO VIDEO</span></div>
-  <div class="si"><div class="dot" id="dot-fr"></div><span id="st-fr">0 FRAMES</span></div>
-  <div class="si"><div class="dot" id="dot-steg"></div><span id="st-steg">STEG: —</span></div>
-  <div class="si" style="margin-left:auto"><span id="st-hash" style="color:var(--dim)">—</span></div>
-</div>
-<div id="toast"></div>
-
+:root{--bg:#f4f6fb;--bd:#dde3ee;--tx:#1b2433;--mu:#66738a;--ac:#2563eb;--hi:#dc2626;--md:#d97706;--ok:#16a34a}
+*{box-sizing:border-box}body{margin:0;font:14px/1.5 system-ui,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx);color-scheme:light}
+header{background:#fff;border-bottom:1px solid var(--bd);padding:14px 24px}h1{margin:0;font-size:21px}header p{margin:2px 0 0;color:var(--mu);font-size:12px}
+main{display:grid;grid-template-columns:360px 1fr;gap:16px;padding:16px 24px;align-items:start}@media(max-width:1000px){main{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:14px}.side{position:sticky;top:12px}
+h3{margin:14px 0 6px;font-size:14px}h4{margin:12px 0 2px;font-size:13px}.mu{color:var(--mu)}small{color:var(--mu)}
+.drop{border:2px dashed #b9c6dc;border-radius:10px;padding:10px;text-align:center;cursor:pointer;background:#f9fbff;margin-bottom:8px}.drop:hover,.drop.on{border-color:var(--ac);background:#eef4ff}.drop.sel{border-style:solid;border-color:var(--ac)}.drop b{display:block}
+video{width:100%;border-radius:8px;background:#111;max-height:250px;margin-top:6px}
+button{background:var(--ac);color:#fff;border:0;border-radius:7px;padding:7px 12px;cursor:pointer;font:inherit}button.g{background:#eef2f8;color:var(--tx);border:1px solid var(--bd)}button:disabled{opacity:.45;cursor:default}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px}.tabs button{background:#fff;color:var(--mu);border:1px solid var(--bd)}.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}input,select,textarea{font:inherit;padding:6px 8px;border:1px solid var(--bd);border-radius:6px;background:#fff;color:var(--tx)}textarea{width:100%}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin:8px 0}.k{background:#f6f8fc;border:1px solid var(--bd);border-radius:8px;padding:8px}.k b{display:block;font-size:17px}.k span{color:var(--mu);font-size:11px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}td,th{border-bottom:1px solid var(--bd);padding:4px 6px;text-align:left;vertical-align:top;word-break:break-all}tr.df td{background:#fff4e5}
+canvas.cv{width:100%;height:150px;display:block;cursor:crosshair;background:#fbfcfe;border:1px solid var(--bd);border-radius:8px}
+.fd{border:1px solid var(--bd);border-left:4px solid var(--mu);border-radius:8px;padding:8px 10px;margin:6px 0}.fd.HIGH{border-left-color:var(--hi)}.fd.MEDIUM{border-left-color:var(--md)}.fd.INFO{border-left-color:var(--ok)}.fd p{margin:2px 0}
+.tag{font-size:11px;padding:1px 6px;border-radius:10px;color:#fff;background:var(--mu)}.tag.HIGH{background:var(--hi)}.tag.MEDIUM{background:var(--md)}.tag.INFO{background:var(--ok)}
+.vd{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-radius:10px;font-size:16px;color:#fff;margin-bottom:8px}.vd.ok{background:var(--ok)}.vd.warn{background:var(--md)}.vd.bad{background:var(--hi)}
+.chip{display:inline-block;background:#eef2f8;border:1px solid var(--bd);border-radius:12px;padding:1px 9px;margin:2px;cursor:pointer;font-size:12px}
+.grid,.trip{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.trip{grid-template-columns:repeat(3,1fr)}.grid img,.trip img{width:100%;border-radius:6px;border:1px solid var(--bd);cursor:pointer}figure{margin:0}figcaption{font-size:11px;color:var(--mu)}
+pre{background:#f6f8fc;border:1px solid var(--bd);border-radius:8px;padding:8px;max-height:220px;overflow:auto;font-size:12px}
+</style></head><body>
+<header><h1>Digital Forensics Tool for Video</h1><p>Frame analysis · audio-level analysis · steganography detection · original-vs-modified comparison — runs entirely on this machine</p></header>
+<main>
+<aside class="side"><div class="card">
+ <input type="file" id="fA" accept="video/*,.mkv,.avi,.wmv,.flv,.ts,.mts,.m2ts,.3gp" hidden>
+ <div class="drop" id="dA"><b>Upload evidence video</b><small></small></div>
+ <div id="hist"></div>
+ <video id="v" controls preload="metadata"></video><small id="vn"></small>
+</div></aside>
+<section>
+<div class="tabs" id="tabs"></div>
+<div class="card pane" id="p-meta"><div id="mt"></div></div>
+<div class="card pane" id="p-fr" hidden>
+ <div class="row"><button onclick="frameAn()">Analyze every frame</button><small>Frame-to-frame change, brightness, sharpness, scene cuts, duplicates. Click a chart to jump the player.</small></div><div id="fa"></div>
+ <h3>Extract frames</h3><div class="row"><select id="xm"><option value="timestamps">Timestamps</option><option value="interval">Interval (s)</option></select>
+ <input id="xt" size="28" placeholder="0, 5, 00:00:10"><input id="xi" type="number" value="10" min="0.1" style="width:80px"><button onclick="ext()">Extract</button></div><div id="grid" class="grid"></div></div>
+<div class="card pane" id="p-au" hidden><div class="row"><button onclick="audio()">Analyze audio levels</button><small>Peak/RMS dBFS, clipping, silence, dynamic range, abrupt level jumps, spectrum.</small></div><div id="ad"></div></div>
+<div class="card pane" id="p-st" hidden><div class="row"><button onclick="steg()">Scan for hidden data</button></div><div id="sg"></div></div>
+<div class="card pane" id="p-cp" hidden><div class="row"><small>Baseline</small><select id="ca"></select><small>vs</small><select id="cb"></select><button onclick="cmp()">Compare</button><small>Upload the original first, then the tampered copy.</small></div><div id="cp"></div></div>
+<div class="card pane" id="p-rp" hidden><div class="row"><input id="inv" placeholder="Investigator"><input id="cas" placeholder="Case number"></div><textarea id="nt" rows="2" placeholder="Notes"></textarea>
+ <div class="row" style="margin-top:8px"><button onclick="rep()">Generate JSON report</button><button class="g" onclick="dl(CMP,'comparison.json')">Export comparison</button><span id="rl"></span></div><h3>Forensic log</h3><pre id="log"></pre></div>
+</section></main>
 <script>
-// ── STATE ──────────────────────────────────────────────────────────────────
-const S = {
-  sid: null, fname: null, origName: null, meta: null,
-  frames: [], findings: [], recoveredFiles: [],
-  mode: 'timestamps', timestamps: [],
-  activeSevFilter: null,
-};
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const S={list:[],cur:-1,ca:0,cb:0},LOG=[];let PAIR=[];let FIND=[],EXTR=[],REC=[],CMP=null;const ev=()=>S.list[S.cur];
+async function api(u,b,fd){const r=await fetch(u,fd?{method:'POST',body:fd}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});let j={};try{j=await r.json()}catch(e){}if(!r.ok||j.error)throw new Error(j.error||r.statusText);return j}
+const log=m=>{LOG.push(new Date().toISOString()+'  '+m);$('#log').textContent=LOG.join('\n')};
+const busy=(id,m)=>$(id).innerHTML=`<p class="mu">⏳ ${m}</p>`,fail=(id,e)=>$(id).innerHTML=`<p style="color:var(--hi)">❌ ${esc(e.message)}</p>`;
+const fmt=s=>{s=+s||0;return String(s/3600|0).padStart(2,'0')+':'+String((s/60|0)%60).padStart(2,'0')+':'+(s%60).toFixed(1).padStart(4,'0')};
+const cards=a=>'<div class="cards">'+a.map(([l,v])=>`<div class="k"><b>${esc(v)}</b><span>${esc(l)}</span></div>`).join('')+'</div>';
+const seek=t=>{const v=$('#v');v.currentTime=t;v.scrollIntoView({block:'nearest'})};
+const dl=(o,n)=>{if(!o)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,2)],{type:'application/json'}));a.download=n;a.click()};
+const chips=(a,u='s')=>a.map(t=>`<span class="chip" onclick="seek(${t})">${t}${u}</span>`).join('');
+const TABS=[['meta','Metadata'],['fr','Frame analysis'],['au','Audio analysis'],['st','Steganography'],['cp','Compare uploads'],['rp','Report & log']];
+$('#tabs').innerHTML=TABS.map(([k,l])=>`<button data-k="${k}">${l}</button>`).join('');
+const tab=k=>{document.querySelectorAll('.pane').forEach(p=>p.hidden=p.id!=='p-'+k);document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.k===k))};
+$('#tabs').onclick=e=>e.target.dataset.k&&tab(e.target.dataset.k);tab('meta');
 
-// ── CLOCK ─────────────────────────────────────────────────────────────────
-setInterval(() => {
-  document.getElementById('clock').textContent =
-    new Date().toUTCString().split(' ')[4] + ' UTC';
-}, 1000);
+/* ---------- charts ---------- */
+function chart(cv,ser,o={}){const n=Math.max(...ser.map(s=>s.d.length)),L=44;let hv=-1;
+ const draw=()=>{const r=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;cv.width=w*r;cv.height=h*r;const c=cv.getContext('2d');c.scale(r,r);
+  const all=ser.flatMap(s=>s.d).concat(o.thr!=null?[o.thr]:[]);let lo=o.min??Math.min(...all),hi=o.max??Math.max(...all);if(hi<=lo)hi=lo+1;
+  const X=i=>L+i/(n-1||1)*(w-L-6),Y=v=>h-18-(v-lo)/(hi-lo)*(h-26);c.font='10px system-ui';c.lineWidth=1;
+  for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4,y=Y(v);c.strokeStyle='#e5eaf3';c.beginPath();c.moveTo(L,y);c.lineTo(w,y);c.stroke();c.fillStyle='#66738a';c.fillText(v.toFixed(hi-lo<5?2:0),2,y+3)}
+  if(o.dur){c.fillStyle='#66738a';c.fillText('0s',L,h-4);c.fillText(o.dur.toFixed(1)+'s',w-40,h-4)}
+  (o.marks||[]).forEach(t=>{const x=X(t/o.dur*(n-1));c.strokeStyle='#dc2626';c.beginPath();c.moveTo(x,4);c.lineTo(x,h-18);c.stroke()});
+  if(o.thr!=null){c.setLineDash([4,3]);c.strokeStyle='#d97706';c.beginPath();c.moveTo(L,Y(o.thr));c.lineTo(w,Y(o.thr));c.stroke();c.setLineDash([])}
+  ser.forEach(s=>{c.strokeStyle=s.c;c.lineWidth=1.5;c.beginPath();s.d.forEach((v,i)=>i?c.lineTo(X(i),Y(v)):c.moveTo(X(i),Y(v)));c.stroke()});
+  if(hv>=0){const x=X(hv);c.strokeStyle='#2563eb';c.lineWidth=1;c.beginPath();c.moveTo(x,4);c.lineTo(x,h-18);c.stroke();
+   const t=(o.dur?(hv/(n-1||1)*o.dur).toFixed(1)+'s  ':'#'+hv+'  ')+ser.map(s=>(s.d[hv]??0).toFixed(2)).join(' / ');c.fillStyle='#1b2433';c.fillText(t,Math.min(x+6,w-130),12)}};
+ cv.onmousemove=e=>{const b=cv.getBoundingClientRect();hv=Math.max(0,Math.min(n-1,Math.round((e.clientX-b.left-L)/(b.width-L-6)*(n-1))));draw()};
+ cv.onmouseleave=()=>{hv=-1;draw()};cv.onclick=()=>{if(hv>=0&&o.click)o.click(hv/(n-1||1)*(o.dur||0))};draw()}
+function wave(cv,mn,mx,dur){const L=44,go=()=>{const r=devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;cv.width=w*r;cv.height=h*r;const c=cv.getContext('2d');c.scale(r,r);c.strokeStyle='#2563eb';
+  mn.forEach((v,i)=>{const x=i/(mn.length-1)*w;c.beginPath();c.moveTo(x,h/2-mx[i]*h/2);c.lineTo(x,h/2-v*h/2);c.stroke()});c.strokeStyle='#e5eaf3';c.beginPath();c.moveTo(0,h/2);c.lineTo(w,h/2);c.stroke()};cv.onclick=e=>{const b=cv.getBoundingClientRect();seek((e.clientX-b.left)/b.width*dur)};go()}
+const cvs=(id,t)=>`<h4>${t}</h4><canvas class="cv" id="${id}"></canvas>`;
 
-// ── TABS ──────────────────────────────────────────────────────────────────
-function sw(id) {
-  document.querySelectorAll('.tab').forEach((b,i) =>
-    b.classList.toggle('active', ['player','frames','steg','meta','report'][i] === id));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('panel-' + id).classList.add('active');
-}
+/* ---------- evidence ---------- */
+{const d=$('#dA'),f=$('#fA');d.onclick=()=>f.click();f.onchange=()=>{up(f.files[0]);f.value=''};
+ d.ondragover=e=>{e.preventDefault();d.classList.add('on')};d.ondragleave=()=>d.classList.remove('on');d.ondrop=e=>{e.preventDefault();d.classList.remove('on');up(e.dataTransfer.files[0])};
+ $('#ca').onchange=e=>S.ca=+e.target.value;$('#cb').onchange=e=>S.cb=+e.target.value}
+const lbl=i=>i?'Version '+(i+1):'Original',resetPanes=()=>{['#fa','#ad','#sg','#grid'].forEach(i=>$(i).innerHTML='');EXTR=[];FIND=[];REC=[]};
+async function up(f){if(!f)return;const sm=$('#dA small');sm.textContent='Uploading '+f.name+'…';const fd=new FormData();fd.append('video',f);
+ try{const j=await api('/upload',null,fd),i=S.list.length;S.list.push({...j,play:j.video_url});S.cur=i;S.ca=0;S.cb=i;log(`Uploaded ${lbl(i)} "${f.name}" SHA-256=${j.metadata.sha256}`);resetPanes();draw();
+  sm.textContent='Preparing Chrome-compatible preview…';
+  api('/playable',{filename:j.filename}).then(p=>{S.list[i].play=p.url;draw()}).catch(()=>draw())}catch(e){sm.textContent='❌ '+e.message}}
+function draw(){$('#dA small').textContent=S.list.length?'Drop another video (e.g. the tampered copy) or click to browse':'Drop a video here or click to browse';
+ $('#hist').innerHTML=S.list.map((e,i)=>`<button class="${i===S.cur?'':'g'}" style="width:100%;text-align:left;margin-top:4px" onclick="pick(${i})"><b>${lbl(i)}</b> · ${esc(e.original_name)}<br><small style="color:inherit;opacity:.8">${e.metadata.file_size_mb} MB · ${fmt(e.metadata.duration_seconds)}</small></button>`).join('');
+ const o=S.list.map((e,i)=>`<option value="${i}">${lbl(i)} – ${esc(e.original_name)}</option>`).join('');$('#ca').innerHTML=o;$('#cb').innerHTML=o;$('#ca').value=S.ca;$('#cb').value=S.cb;
+ const e=ev(),v=$('#v');if(e&&v.getAttribute('data-src')!==e.play){const t=v.currentTime;v.setAttribute('data-src',e.play);v.src=e.play;v.onloadedmetadata=()=>{try{v.currentTime=t}catch(x){}}}$('#vn').textContent=e?lbl(S.cur)+': '+e.original_name:'';meta()}
+const pick=i=>{S.cur=i;resetPanes();draw()};
+function meta(){const m=ev()?.metadata;if(!m){$('#mt').innerHTML='<p class="mu">Upload the original video to begin. Then upload the tampered copy on the same page and use the Compare tab.</p>';return}
+ const kv=o=>'<table>'+Object.entries(o).map(([k,v])=>`<tr><td style="width:32%"><b>${esc(k)}</b></td><td>${esc(v)}</td></tr>`).join('')+'</table>',has=o=>o&&Object.keys(o).length;
+ $('#mt').innerHTML=cards([['Duration',fmt(m.duration_seconds)],['Resolution',m.width+'×'+m.height],['FPS',m.fps],['Frames',m.frame_count],['Codec tag',m.codec],['Size (MB)',m.file_size_mb]])+'<h3>Integrity & filesystem</h3>'+kv({'MD5':m.md5,'SHA-256':m.sha256,Created:m.created,Modified:m.modified,MIME:m.mime_type})+(has(m.mutagen_extra)?'<h3>Stream info</h3>'+kv(m.mutagen_extra):'')+(has(m.mutagen_tags)?'<h3>Embedded tags</h3>'+kv(m.mutagen_tags):'')+(has(m.raw_strings)?'<h3>Strings in header</h3>'+kv(m.raw_strings):'')}
 
-// ── TOAST ─────────────────────────────────────────────────────────────────
-let _tt;
-function toast(msg, type='ok') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'show' + (type==='err' ? ' err' : '');
-  clearTimeout(_tt);
-  _tt = setTimeout(() => t.className = '', 3000);
-}
+/* ---------- frame analysis ---------- */
+async function frameAn(){const e=ev();if(!e)return;busy('#fa','Scanning every frame…');
+ try{const j=await api('/frame_analysis',{filename:e.filename});log(`Frame analysis "${e.original_name}": ${j.cuts.length} cut/jump(s), ${j.dups} duplicate frame(s)`);
+  $('#fa').innerHTML=cards([['Frames decoded',j.total],['FPS',j.fps],['Cuts / jumps',j.cuts.length],['Duplicate frames',j.stride>1?'n/a (sampled)':j.dups],['Avg brightness',j.avg_b],['Blur-prone frames',j.blurry]])
+   +cvs('c1','Frame-to-frame change <small>(spikes = cuts, splices or dropped frames; flat zero = frozen/duplicated frames)</small>')+(j.cuts.length?'<small>Jump to: </small>'+chips(j.cuts):'')+cvs('c2','Brightness (0–255)')+cvs('c3','Sharpness (Laplacian variance)');
+  const o={dur:j.dur,click:seek};chart($('#c1'),[{d:j.diff,c:'#dc2626'}],{...o,marks:j.cuts,min:0});chart($('#c2'),[{d:j.bright,c:'#2563eb'}],o);chart($('#c3'),[{d:j.sharp,c:'#16a34a'}],{...o,min:0})}catch(x){fail('#fa',x)}}
+const sec=v=>v.includes(':')?v.split(':').reduce((a,b)=>a*60+ +b,0):+v;
+async function ext(){const e=ev();if(!e)return;const m=$('#xm').value,b={session_id:e.session_id,filename:e.filename,mode:m};
+ if(m==='interval')b.interval=+$('#xi').value||10;else b.timestamps=$('#xt').value.split(',').map(s=>s.trim()).filter(Boolean).map(sec);
+ try{const j=await api('/extract_frames',b);EXTR=j.frames;log(`Extracted ${j.count} frame(s) from "${e.original_name}"`);
+  $('#grid').innerHTML=j.frames.map(f=>`<figure><img src="${f.url}" onclick="window.open('${f.url}')"><figcaption><a href="#" onclick="seek(${f.timestamp});return false">${f.timestamp_formatted}</a> · frame ${f.frame_number}</figcaption></figure>`).join('')||'<p class="mu">No frames (timestamps outside video?)</p>'}catch(x){$('#grid').innerHTML='❌ '+esc(x.message)}}
 
-// ── LOADING ───────────────────────────────────────────────────────────────
-function showLoad(txt='Processing…', sub='Please wait') {
-  document.getElementById('ld-txt').textContent = txt;
-  document.getElementById('ld-sub').textContent  = sub;
-  document.getElementById('ld').classList.add('show');
-}
-function hideLoad() { document.getElementById('ld').classList.remove('show'); }
+/* ---------- audio ---------- */
+async function audio(){const e=ev();if(!e)return;busy('#ad','Decoding and measuring audio…');
+ try{const j=await api('/audio_analysis',{filename:e.filename});if(!j.has_audio){$('#ad').innerHTML='<p>No audio stream was found in this file.</p>';return}
+  log(`Audio analysis "${e.original_name}": peak ${j.peak} dBFS, RMS ${j.rms} dBFS, ${j.jumps.length} level jump(s)`);
+  $('#ad').innerHTML=cards([['Peak dBFS',j.peak],['RMS dBFS',j.rms],['Crest factor dB',j.crest],['Dynamic range dB',j.dyn],['Clipped %',j.clip],['Silence %',j.silence],['DC offset',j.dc],['Duration s',j.dur]])
+   +cvs('w1','Waveform <small>(click to seek)</small>')+cvs('w2','Short-term level (RMS dBFS, 50 ms windows)')+(j.jumps.length?'<small>Abrupt level jumps (>30 dB): </small>'+chips(j.jumps):'')+(j.gaps.length?'<br><small>Digital-silence gaps (possible cuts): </small>'+chips(j.gaps):'')+cvs('w3','Average spectrum (dB, low → high frequency)');
+  wave($('#w1'),j.wmin,j.wmax,j.dur);chart($('#w2'),[{d:j.rms_db,c:'#2563eb'}],{dur:j.dur,click:seek,max:0,marks:j.jumps});chart($('#w3'),[{d:j.bands,c:'#7c3aed'}])}catch(x){fail('#ad',x)}}
 
-// ── UPLOAD ────────────────────────────────────────────────────────────────
-const drop  = document.getElementById('drop');
-const finput = document.getElementById('finput');
+/* ---------- steganography ---------- */
+async function steg(){const e=ev();if(!e)return;busy('#sg','Scanning container, signatures, metadata and LSB planes…');
+ try{const j=await api('/analyze_steg',{session_id:e.session_id,filename:e.filename});FIND=j.findings;log(`Steganography scan "${e.original_name}": ${j.counts.HIGH} high, ${j.counts.MEDIUM} medium`);
+  $('#sg').innerHTML=cards([['High',j.counts.HIGH],['Medium',j.counts.MEDIUM],['Info',j.counts.INFO]])+(FIND.map((f,i)=>`<div class="fd ${f.severity}"><b>${esc(f.type)}</b> <span class="tag ${f.severity}">${f.severity}</span><p>${esc(f.description)}</p><small>${esc(f.context||'')}</small>${f.recoverable?` <button class="g" onclick="rec(${i})">Recover</button> <span id="r${i}"></span>`:''}</div>`).join('')||'<p>✅ No steganography indicators found.</p>')}catch(x){fail('#sg',x)}}
+async function rec(i){try{const j=await api('/recover',{session_id:ev().session_id,filename:ev().filename,finding:FIND[i]});if(j.success){REC.push(j);log('Recovered '+j.filename);$('#r'+i).innerHTML=`<a href="${j.url}" download>⬇ ${esc(j.filename)} (${j.size} B)</a>`}else $('#r'+i).textContent='❌ '+j.error}catch(x){$('#r'+i).textContent='❌ '+x.message}}
 
-drop.addEventListener('dragover',  e => { e.preventDefault(); drop.classList.add('over'); });
-drop.addEventListener('dragleave', () => drop.classList.remove('over'));
-drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); const f = e.dataTransfer.files[0]; if(f) uploadFile(f); });
-finput.addEventListener('change', e => { if(e.target.files[0]) uploadFile(e.target.files[0]); });
+/* ---------- compare ---------- */
+async function cmp(){if(S.list.length<2){$('#cp').innerHTML='<p class="mu">Upload the original video and then the tampered copy first.</p>';return}
+ const a=S.list[S.ca],b=S.list[S.cb];if(a===b){$('#cp').innerHTML='<p class="mu">Choose two different uploads to compare.</p>';return}PAIR=[a.filename,b.filename];
+ busy('#cp','Comparing frames and audio (long videos can take a minute)…');
+ try{const j=await api('/compare',{a:PAIR[0],b:PAIR[1]});CMP=j;log(`Compared ${lbl(S.ca)} vs ${lbl(S.cb)}: ${j.verdict} (score ${j.score})`);
+  const au=j.audio,fr=j.frames,worst=fr.ssim.length?fr.t[fr.ssim.indexOf(Math.min(...fr.ssim))]:0;
+  $('#cp').innerHTML=`<div class="vd ${j.level}"><b>${esc(j.verdict)}</b><span>visual difference score ${j.score}</span></div>`
+   +j.findings.map(f=>`<div class="fd ${f.sev}"><span class="tag ${f.sev}">${f.sev}</span> ${esc(f.text)}</div>`).join('')
+   +'<h3>Metadata differences</h3><table><tr><th>Field</th><th>Baseline</th><th>Compared</th></tr>'+j.rows.map(r=>`<tr class="${r[3]?'df':''}"><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join('')+'</table>'
+   +(fr.t.length?cvs('s1','Per-frame similarity baseline↔compared (SSIM, 1.0 = identical) <small>— click to inspect that moment</small>')+`<div class="row"><small>Scrub:</small><input type="range" id="sl" min="0" max="${j.dur}" step="0.1" value="${worst}" style="flex:1"><b id="st">${worst}s</b></div>`
+    +'<div class="trip"><figure><img id="ia"><figcaption>Baseline</figcaption></figure><figure><img id="ib"><figcaption>Compared</figcaption></figure><figure><img id="id"><figcaption>Difference heat-map <span id="pc"></span></figcaption></figure></div>':'')
+   +(au?'<h3>Audio comparison</h3>'+cards([['Gain B vs A dB',au.gain],['Envelope corr.',au.env_corr],['Waveform corr.',au.corr],['Peak A / B dBFS',au.A.peak+' / '+au.B.peak],['RMS A / B dBFS',au.A.rms+' / '+au.B.rms],['Clipped A / B %',au.A.clip+' / '+au.B.clip]])
+    +cvs('a1','Level over time: <i style="color:#2563eb">Baseline</i> vs <i style="color:#dc2626">Compared</i> (dBFS)')+cvs('a2','Level difference B − A (dB)')+cvs('a3','Spectrum: <i style="color:#2563eb">Baseline</i> vs <i style="color:#dc2626">Compared</i>'):'<p class="mu">Audio comparison unavailable (no audio in either file, or ffmpeg missing).</p>');
+  if(fr.t.length){chart($('#s1'),[{d:fr.ssim,c:'#2563eb'}],{dur:j.dur,max:1,thr:.97,click:t=>{$('#sl').value=t;show(t)}});$('#sl').onchange=e=>show(+e.target.value);show(worst)}
+  if(au){const o={dur:au.dur,click:seek};chart($('#a1'),[{d:au.rmsA,c:'#2563eb'},{d:au.rmsB,c:'#dc2626'}],{...o,max:0});chart($('#a2'),[{d:au.diff,c:'#7c3aed'}],o);chart($('#a3'),[{d:au.bandsA,c:'#2563eb'},{d:au.bandsB,c:'#dc2626'}])}}catch(x){fail('#cp',x)}}
+async function show(t){$('#st').textContent=(+t).toFixed(1)+'s';seek(t);try{const j=await api('/compare_frame',{a:PAIR[0],b:PAIR[1],t});$('#ia').src=j.a;$('#ib').src=j.b;$('#id').src=j.diff;$('#pc').textContent=`(${j.pct}% of pixels changed)`}catch(x){$('#pc').textContent='❌ '+x.message}}
 
-async function uploadFile(file) {
-  showLoad('Uploading Evidence…', 'Computing hashes and extracting metadata');
-  const fd = new FormData(); fd.append('video', file);
-  try {
-    const data = await fetch('/upload', {method:'POST', body:fd}).then(r=>r.json());
-    hideLoad();
-    if (!data.success) { toast(data.error,'err'); return; }
-    S.sid = data.session_id; S.fname = data.filename;
-    S.origName = data.original_name; S.meta = data.metadata;
-    S.frames = []; S.findings = []; S.recoveredFiles = [];
-    renderFileBadge(data);
-    loadVideo(data.video_url);
-    renderMeta(data.metadata);
-    ['sec-frames','sec-steg','sec-inv'].forEach(id => document.getElementById(id).style.display='block');
-    updateStatus();
-    toast('Evidence loaded ✓');
-    sw('player');
-  } catch(e) { hideLoad(); toast('Upload failed: '+e.message,'err'); }
-}
-
-function renderFileBadge(data) {
-  const m = data.metadata;
-  const b = document.getElementById('fbadge');
-  b.style.display = 'block';
-  b.innerHTML = `<div class="fbadge">
-    <div class="fname">${data.original_name}</div>
-    <div class="mr"><span>Duration</span><span class="mv">${m.duration_formatted||'N/A'}</span></div>
-    <div class="mr"><span>Resolution</span><span class="mv">${m.width}×${m.height}</span></div>
-    <div class="mr"><span>FPS</span><span class="mv">${(m.fps||0).toFixed(2)}</span></div>
-    <div class="mr"><span>Size</span><span class="mv">${m.file_size_mb} MB</span></div>
-    <div class="mr"><span>Frames</span><span class="mv">${m.frame_count}</span></div>
-    <div class="mr"><span>Codec</span><span class="mv">${m.codec||'N/A'}</span></div>
-  </div>`;
-}
-
-// ── PLAYER ────────────────────────────────────────────────────────────────
-function loadVideo(url) {
-  const v = document.getElementById('vid');
-  v.src = url; v.style.display = 'block';
-  document.getElementById('no-vid').style.display = 'none';
-  document.getElementById('pctrl').style.display = 'flex';
-  v.ontimeupdate = () => {
-    if (!isNaN(v.duration)) {
-      document.getElementById('prg').value = (v.currentTime / v.duration) * 100;
-      document.getElementById('cur').textContent = fmt(v.currentTime);
-    }
-  };
-  v.onloadedmetadata = () => document.getElementById('dur').textContent = fmt(v.duration);
-  v.onplay  = () => document.getElementById('pbtn').textContent = '⏸';
-  v.onpause = () => document.getElementById('pbtn').textContent = '▶';
-}
-const fmt = s => { const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=Math.floor(s%60); return h?`${h}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`:`${m}:${String(sc).padStart(2,'0')}`; };
-function togglePlay() { const v=document.getElementById('vid'); v.paused?v.play():v.pause(); }
-function skip(s) { const v=document.getElementById('vid'); v.currentTime=Math.max(0,Math.min(v.duration,v.currentTime+s)); }
-function seek(val) { const v=document.getElementById('vid'); if(!isNaN(v.duration)) v.currentTime=(val/100)*v.duration; }
-function setVol(v) { document.getElementById('vid').volume = v/100; }
-function setSpd(v) { document.getElementById('vid').playbackRate = parseFloat(v); }
-function captureNow() {
-  const v=document.getElementById('vid'), ts=v.currentTime;
-  if (!S.timestamps.includes(ts)) { S.timestamps.push(ts); renderChips(); toast('Timestamp captured: '+fmt(ts)); }
-}
-
-// ── FRAME MODE ────────────────────────────────────────────────────────────
-function setMode(m) {
-  S.mode = m;
-  document.getElementById('mode-ts').classList.toggle('active', m==='timestamps');
-  document.getElementById('mode-int').classList.toggle('active', m==='interval');
-  document.getElementById('ts-area').style.display  = m==='timestamps' ? 'block' : 'none';
-  document.getElementById('int-area').style.display = m==='interval'   ? 'block' : 'none';
-}
-
-function parseTs(v) {
-  v = v.trim();
-  if (v.includes(':')) {
-    const p = v.split(':').map(Number);
-    return p.length===3 ? p[0]*3600+p[1]*60+p[2] : p[0]*60+p[1];
-  }
-  return parseFloat(v);
-}
-
-function addTs() {
-  const raw = document.getElementById('ts-inp').value.trim();
-  if (!raw) return;
-  raw.split(',').forEach(v => {
-    const ts = parseTs(v);
-    if (!isNaN(ts) && ts>=0 && !S.timestamps.includes(ts)) S.timestamps.push(ts);
-  });
-  S.timestamps.sort((a,b)=>a-b);
-  renderChips();
-  document.getElementById('ts-inp').value = '';
-}
-document.getElementById('ts-inp').addEventListener('keydown', e => { if(e.key==='Enter') addTs(); });
-
-function renderChips() {
-  document.getElementById('chips').innerHTML = S.timestamps.map((ts,i)=>
-    `<span class="chip">${fmt(ts)}<span class="x" onclick="rmTs(${i})">✕</span></span>`).join('');
-}
-function rmTs(i) { S.timestamps.splice(i,1); renderChips(); }
-
-async function extractFrames() {
-  if (!S.sid) { toast('Load a video first','err'); return; }
-  let body = {session_id:S.sid, filename:S.fname, mode:S.mode};
-  if (S.mode==='interval') {
-    body.interval = parseFloat(document.getElementById('int-inp').value)||10;
-  } else {
-    if (!S.timestamps.length) { toast('Add at least one timestamp','err'); return; }
-    body.timestamps = S.timestamps;
-  }
-  showLoad('Extracting Frames…','Reading video stream');
-  try {
-    const data = await fetch('/extract_frames',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(r=>r.json());
-    hideLoad();
-    if (!data.success) { toast(data.error,'err'); return; }
-    S.frames = data.frames;
-    renderFrames();
-    sw('frames');
-    updateStatus();
-    toast(`${data.count} frames extracted ✓`);
-  } catch(e) { hideLoad(); toast('Extraction failed: '+e.message,'err'); }
-}
-
-function renderFrames() {
-  const grid = document.getElementById('fgrid');
-  const cnt  = document.getElementById('fr-cnt');
-  document.getElementById('fbadge-cnt').textContent = S.frames.length ? ` (${S.frames.length})` : '';
-  if (!S.frames.length) {
-    grid.innerHTML = '<div class="empty-msg" style="grid-column:1/-1">No frames extracted.</div>';
-    cnt.textContent = 'No frames';
-    return;
-  }
-  cnt.textContent = `${S.frames.length} frame${S.frames.length!==1?'s':''} extracted`;
-  grid.innerHTML = S.frames.map(f=>`
-    <div class="fcard">
-      <img class="fimg" src="${f.url}" alt="Frame ${f.timestamp_formatted}" onclick="openModal('${f.url}')" loading="lazy"/>
-      <div class="fmeta">
-        <span class="fts">⏱ ${f.timestamp_formatted}</span>
-        <a class="fdl" href="${f.url}" download="frame_${f.timestamp_formatted.replace(/:/g,'_')}.jpg">⬇</a>
-      </div>
-    </div>`).join('');
-}
-
-function dlAll() { S.frames.forEach(f=>{ const a=document.createElement('a'); a.href=f.url; a.download=`frame_${f.timestamp_formatted.replace(/:/g,'_')}.jpg`; a.click(); }); }
-
-// ── STEGANOGRAPHY ─────────────────────────────────────────────────────────
-async function analyzeSteg() {
-  if (!S.sid) { toast('Load a video first','err'); return; }
-  showLoad('Running Steganography Analysis…','Scanning container, signatures, metadata, LSB');
-  try {
-    const data = await fetch('/analyze_steg',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:S.sid,filename:S.fname})}).then(r=>r.json());
-    hideLoad();
-    if (!data.success) { toast(data.error,'err'); return; }
-    S.findings = data.findings;
-    document.getElementById('cnt-high').textContent  = data.counts.HIGH;
-    document.getElementById('cnt-med').textContent   = data.counts.MEDIUM;
-    document.getElementById('cnt-info').textContent  = data.counts.INFO;
-    document.getElementById('cnt-files').textContent = S.recoveredFiles.length;
-    document.getElementById('steg-empty').style.display   = 'none';
-    document.getElementById('steg-content').style.display = 'block';
-    S.activeSevFilter = null;
-    clearFilterUI();
-    applyFilters();
-    sw('steg');
-    updateStatus();
-    toast(`Analysis complete — ${data.total} finding(s) ✓`);
-  } catch(e) { hideLoad(); toast('Analysis failed: '+e.message,'err'); }
-}
-
-// ── FILTERS & SORT ────────────────────────────────────────────────────────
-function filterSev(sev) {
-  if (S.activeSevFilter === sev) {
-    S.activeSevFilter = null;
-    document.querySelectorAll('.stat-card').forEach(c=>c.classList.remove('active-filter'));
-  } else {
-    S.activeSevFilter = sev;
-    document.querySelectorAll('.stat-card').forEach(c=>c.classList.remove('active-filter'));
-    document.getElementById('sc-' + sev.toLowerCase()).classList.add('active-filter');
-    // map card id
-    const map = {HIGH:'sc-high',MEDIUM:'sc-med',INFO:'sc-info'};
-    if (map[sev]) document.getElementById(map[sev]).classList.add('active-filter');
-  }
-  applyFilters();
-}
-
-function applyFilters() {
-  const sort    = document.getElementById('sort-sel').value;
-  const keyword = document.getElementById('search-inp').value.toLowerCase().trim();
-  const sevF    = S.activeSevFilter;
-
-  let filtered = [...S.findings];
-
-  if (sevF) filtered = filtered.filter(f => f.severity === sevF);
-  if (keyword) filtered = filtered.filter(f =>
-    (f.type||'').toLowerCase().includes(keyword) ||
-    (f.description||'').toLowerCase().includes(keyword) ||
-    (f.context||'').toLowerCase().includes(keyword) ||
-    (f.tag_key||'').toLowerCase().includes(keyword));
-
-  // Sort
-  const sevOrd = {HIGH:0,MEDIUM:1,INFO:2};
-  if (sort === 'severity') {
-    filtered.sort((a,b) => (sevOrd[a.severity]||2) - (sevOrd[b.severity]||2) || (a.type||'').localeCompare(b.type||''));
-  } else if (sort === 'type') {
-    filtered.sort((a,b) => (a.type||'').localeCompare(b.type||''));
-  } else if (sort === 'category') {
-    filtered.sort((a,b) => (a.category||'').localeCompare(b.category||'') || (sevOrd[a.severity]||2)-(sevOrd[b.severity]||2));
-  }
-
-  document.getElementById('result-count').textContent = `${filtered.length} / ${S.findings.length} findings`;
-  renderFindings(filtered);
-}
-
-function clearFilters() {
-  S.activeSevFilter = null;
-  document.querySelectorAll('.stat-card').forEach(c=>c.classList.remove('active-filter'));
-  document.getElementById('search-inp').value = '';
-  document.getElementById('sort-sel').value   = 'severity';
-  applyFilters();
-}
-function clearFilterUI() {
-  S.activeSevFilter = null;
-  document.querySelectorAll('.stat-card').forEach(c=>c.classList.remove('active-filter'));
-  document.getElementById('search-inp').value = '';
-  document.getElementById('sort-sel').value   = 'severity';
-}
-
-function catLabel(cat) {
-  const m = {
-    container_anomaly:  'Container',
-    embedded_signature: 'Signature',
-    signature_grouped:  'Grouped',
-    metadata_anomaly:   'Metadata',
-    lsb_analysis:       'LSB',
-    error:              'Error',
-  };
-  return m[cat] || cat;
-}
-
-function extIcon(ext) {
-  const m = {jpg:'🖼',png:'🖼',gif:'🖼',bmp:'🖼',webp:'🖼',
-             zip:'🗜',rar:'🗜','7z':'🗜',gz:'🗜',bz2:'🗜',
-             pdf:'📄',doc:'📄',docx:'📄',exe:'⚠',elf:'⚠',
-             db:'🗄',mp3:'🎵',ogg:'🎵',flac:'🎵',wav:'🎵',bin:'📦'};
-  return m[ext] || '📦';
-}
-
-function renderFindings(list) {
-  const container = document.getElementById('findings-list');
-  if (!list.length) {
-    container.innerHTML = '<div class="empty-msg">No findings match the current filter.</div>';
-    return;
-  }
-
-  container.innerHTML = list.map((f, gi) => {
-    const idx = S.findings.indexOf(f);
-    const offsets = f.offsets ? f.offsets.slice(0,5).map(o=>`0x${o.toString(16).toUpperCase()}`).join(', ') : (f.offset!==undefined ? `0x${f.offset.toString(16).toUpperCase()}` : '');
-    const countBadge = f.count && f.count > 1 ? `<span class="cat-badge">${f.count}×</span>` : '';
-
-    return `<div class="finding ${f.severity}" id="finding-${idx}">
-      <div class="finding-hdr">
-        <span class="finding-type">${f.type||''}</span>
-        <div class="badges">
-          ${countBadge}
-          <span class="cat-badge">${catLabel(f.category||'')}</span>
-          <span class="sev-badge sev-${f.severity}">${f.severity}</span>
-        </div>
-      </div>
-      <div class="finding-desc">${f.description||''}</div>
-      ${f.context ? `<div class="finding-ctx">${f.context}</div>` : ''}
-      ${offsets ? `<div class="finding-detail">Offset: <span>${offsets}</span>${f.count>1?' (first '+Math.min(f.count,5)+(f.count>5?'+':'')+')':''}</div>` : ''}
-      ${f.size!==undefined ? `<div class="finding-detail">Size: <span>${f.size.toLocaleString()} bytes</span></div>` : ''}
-      ${f.magic_hex ? `<div class="finding-detail">Magic: <span>${f.magic_hex}</span></div>` : ''}
-      ${f.data_preview ? `<div class="finding-detail">Preview: <span style="font-size:.6rem">${f.data_preview}</span></div>` : ''}
-      ${f.tag_key ? `<div class="finding-detail">Tag: <span>${f.tag_key}</span> = <span class="tag-val">${(f.tag_value||'').slice(0,200)}</span></div>` : ''}
-      ${f.recoverable ? `<button class="recover-btn" onclick="doRecover(${idx})">⬡ Attempt Recovery</button>` : ''}
-      <div id="rec-result-${idx}"></div>
-    </div>`;
-  }).join('');
-}
-
-async function doRecover(idx) {
-  const finding = S.findings[idx];
-  showLoad('Recovering Hidden Data…','Extracting bytes from detected offset');
-  try {
-    const data = await fetch('/recover',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({session_id:S.sid,filename:S.fname,finding})}).then(r=>r.json());
-    hideLoad();
-    const div = document.getElementById('rec-result-'+idx);
-    if (data.success) {
-      div.innerHTML = `<div class="recover-result recover-ok">✓ Recovered: <a href="${data.url}" target="_blank" style="color:var(--acc3)">${data.filename}</a> (${data.size.toLocaleString()} bytes)</div>`;
-      // Add to recovered files list
-      const rf = {filename:data.filename, url:data.url, size:data.size, extension:data.extension||finding.extension||'bin', source_type:finding.type};
-      S.recoveredFiles.push(rf);
-      updateRecoveredPanel();
-      document.getElementById('cnt-files').textContent = S.recoveredFiles.length;
-      updateStatus();
-      toast('Recovery successful ✓');
-    } else {
-      div.innerHTML = `<div class="recover-result recover-err">Recovery failed: ${data.error}</div>`;
-      toast('Recovery failed','err');
-    }
-  } catch(e) { hideLoad(); toast('Error: '+e.message,'err'); }
-}
-
-function updateRecoveredPanel() {
-  const list = document.getElementById('recovered-list');
-  if (!S.recoveredFiles.length) {
-    list.innerHTML = '<div style="color:var(--dim);font-family:var(--mono);font-size:.72rem">No files recovered yet.</div>';
-    return;
-  }
-  list.innerHTML = S.recoveredFiles.map(f => `
-    <div class="rec-file">
-      <div class="rec-icon">${extIcon(f.extension)}</div>
-      <div class="rec-info">
-        <div class="rec-name">${f.filename}</div>
-        <div class="rec-size">${f.size.toLocaleString()} bytes · from: ${f.source_type}</div>
-      </div>
-      <a class="rec-dl" href="${f.url}" target="_blank" download="${f.filename}">⬇ Download</a>
-    </div>`).join('');
-}
-
-function toggleRecoveredPanel() {
-  const panel = document.getElementById('recovered-panel');
-  panel.classList.toggle('show');
-  document.getElementById('sc-files').classList.toggle('active-filter', panel.classList.contains('show'));
-}
-
-// ── METADATA ──────────────────────────────────────────────────────────────
-function renderMeta(m) {
-  if (!m) return;
-  document.getElementById('meta-empty').style.display = 'none';
-  document.getElementById('meta-grid').style.display  = 'grid';
-
-  const row = (k, v, cls='') => `<tr><td>${k}</td><td class="${cls}">${v||'N/A'}</td></tr>`;
-  const grid = document.getElementById('meta-grid');
-
-  const bitrate = m.mutagen_extra && m.mutagen_extra.bitrate ? m.mutagen_extra.bitrate + ' bps' : 'N/A';
-  const sr      = m.mutagen_extra && m.mutagen_extra.sample_rate ? m.mutagen_extra.sample_rate + ' Hz' : 'N/A';
-  const ch      = m.mutagen_extra && m.mutagen_extra.channels ? m.mutagen_extra.channels : 'N/A';
-
-  const hasRaw  = m.raw_strings  && Object.keys(m.raw_strings).length > 0;
-  const hasTags = m.mutagen_tags && Object.keys(m.mutagen_tags).length > 0;
-  const hasExtra = m.mutagen_extra && Object.keys(m.mutagen_extra).length > 0;
-
-  grid.innerHTML = `
-    <div class="mcard">
-      <h3>VIDEO PROPERTIES</h3>
-      <table class="mtbl">
-        ${row('Resolution', `${m.width} × ${m.height} px`)}
-        ${row('Duration', m.duration_formatted + ` (${m.duration_seconds}s)`)}
-        ${row('Frame Rate', `${(m.fps||0).toFixed(3)} fps`)}
-        ${row('Frame Count', (m.frame_count||0).toLocaleString())}
-        ${row('Codec (FOURCC)', m.codec)}
-      </table>
-    </div>
-    <div class="mcard">
-      <h3>FILE PROPERTIES</h3>
-      <table class="mtbl">
-        ${row('MIME Type', m.mime_type)}
-        ${row('Extension', m.extension)}
-        ${row('File Size', `${m.file_size_mb} MB (${(m.file_size||0).toLocaleString()} bytes)`)}
-        ${row('Created', m.created)}
-        ${row('Modified', m.modified)}
-      </table>
-    </div>
-    <div class="mcard">
-      <h3>AUDIO STREAM INFO</h3>
-      <table class="mtbl">
-        ${row('Bitrate', bitrate)}
-        ${row('Sample Rate', sr)}
-        ${row('Channels', ch)}
-        ${Object.entries(m.mutagen_extra||{}).filter(([k])=>!['bitrate','sample_rate','channels'].includes(k)).map(([k,v])=>row(k,String(v))).join('')}
-      </table>
-    </div>
-    <div class="mcard">
-      <h3>CHAIN OF CUSTODY — HASHES</h3>
-      <table class="mtbl">
-        ${row('MD5', m.md5, 'hash-val')}
-        ${row('SHA-256', m.sha256, 'hash-val')}
-      </table>
-    </div>
-    ${hasTags ? `
-    <div class="mcard mcard-full">
-      <h3>EMBEDDED CONTAINER TAGS <span class="meta-pill">${Object.keys(m.mutagen_tags).length} tags</span></h3>
-      <table class="mtbl">
-        ${Object.entries(m.mutagen_tags).map(([k,v]) => {
-          const sv = String(v);
-          const big = sv.length > 100;
-          const id  = 'mtv_' + k.replace(/\W/g,'_');
-          return `<tr><td>${k}</td><td><div class="meta-tag-val" id="${id}" onclick="toggleTagVal('${id}')">${sv.slice(0,300)}${sv.length>300?'…':''}</div>${big?'<span style="font-family:var(--mono);font-size:.58rem;color:var(--acc);cursor:pointer" onclick="toggleTagVal(\''+id+'\')">[expand]</span>':''}</td></tr>`;
-        }).join('')}
-      </table>
-    </div>` : ''}
-    ${hasRaw ? `
-    <div class="mcard mcard-full">
-      <h3>RAW STRINGS / XMP METADATA <span class="meta-pill">${Object.keys(m.raw_strings).length} entries</span></h3>
-      <table class="mtbl">
-        ${Object.entries(m.raw_strings).map(([k,v])=>row(k, String(v).slice(0,300))).join('')}
-      </table>
-    </div>` : ''}
-  `;
-}
-
-function toggleTagVal(id) {
-  document.getElementById(id).classList.toggle('expanded');
-}
-
-// ── REPORT ────────────────────────────────────────────────────────────────
-async function genReport() {
-  if (!S.sid) { toast('Load a video first','err'); return; }
-  showLoad('Generating Forensic Report…','Compiling findings and chain of custody');
-  try {
-    const data = await fetch('/generate_report',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        session_id:S.sid, filename:S.fname, original_name:S.origName,
-        metadata:S.meta, frames:S.frames, steg_findings:S.findings,
-        recovered_files:S.recoveredFiles,
-        investigator:document.getElementById('inv-name').value||'Unknown',
-        case_number:document.getElementById('case-num').value||'N/A',
-        notes:'',
-      })}).then(r=>r.json());
-    hideLoad();
-    if (!data.success) { toast('Report generation failed','err'); return; }
-    document.getElementById('rep-empty').style.display   = 'none';
-    document.getElementById('rep-content').style.display = 'block';
-    document.getElementById('rep-json').textContent = JSON.stringify(data.report, null, 2);
-    const dl = document.getElementById('rep-dl');
-    dl.href = data.report_url;
-    dl.download = `forensic_report_${data.report.report_id}.json`;
-    dl.style.display = 'inline';
-    sw('report');
-    toast('Report generated ✓');
-  } catch(e) { hideLoad(); toast('Report error: '+e.message,'err'); }
-}
-
-// ── MODAL ─────────────────────────────────────────────────────────────────
-function openModal(url) { document.getElementById('modal-img').src=url; document.getElementById('modal').classList.add('open'); }
-function closeModal()   { document.getElementById('modal').classList.remove('open'); }
-document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
-
-// ── STATUS BAR ────────────────────────────────────────────────────────────
-function updateStatus() {
-  const hasV   = !!S.sid;
-  const hasF   = S.frames.length > 0;
-  const highSt = S.findings.some(f=>f.severity==='HIGH');
-  const hasSt  = S.findings.length > 0;
-
-  document.getElementById('dot-vid').className  = 'dot ' + (hasV ? 'g' : 'r');
-  document.getElementById('st-vid').textContent  = hasV ? (S.origName||'').slice(0,22) : 'NO VIDEO';
-  document.getElementById('dot-fr').className   = 'dot ' + (hasF ? 'g' : '');
-  document.getElementById('st-fr').textContent   = S.frames.length + ' FRAMES';
-  document.getElementById('dot-steg').className = 'dot ' + (highSt ? 'r' : hasSt ? 'y' : '');
-  document.getElementById('st-steg').textContent = hasSt ? 'STEG: ' + S.findings.length + ' FINDINGS' : 'STEG: —';
-  if (S.meta && S.meta.md5) document.getElementById('st-hash').textContent = 'MD5: ' + S.meta.md5.slice(0,12) + '…';
-}
-</script>
-</body>
-</html>
+/* ---------- report ---------- */
+async function rep(){const e=ev();if(!e)return;try{const j=await api('/generate_report',{session_id:e.session_id,original_name:e.original_name,metadata:e.metadata,case_number:$('#cas').value||'N/A',investigator:$('#inv').value||'Unknown',notes:$('#nt').value,frames:EXTR,steg_findings:FIND,recovered_files:REC});
+ log('Report '+j.report.report_id+' generated');$('#rl').innerHTML=`<a href="${j.report_url}" download>⬇ forensic_report.json</a>`}catch(x){$('#rl').textContent='❌ '+x.message}}
+</script></body></html>

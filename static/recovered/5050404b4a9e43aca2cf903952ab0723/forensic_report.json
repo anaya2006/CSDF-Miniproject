@@ -1,0 +1,127 @@
+{
+  "report_id": "356221C4C32A",
+  "generated_at": "2026-10-08T17:45:47.224821Z",
+  "case_number": "N/A",
+  "investigator": "Unknown",
+  "notes": "",
+  "evidence": {
+    "original_filename": "hidden_in_free_box.mp4",
+    "session_id": "5050404b4a9e43aca2cf903952ab0723",
+    "metadata": {
+      "codec": "FMP4",
+      "created": "2026-10-08 23:15:17",
+      "duration_formatted": "00:00:05",
+      "duration_seconds": 5,
+      "extension": "mp4",
+      "file_size": 123601,
+      "file_size_mb": 0.118,
+      "fps": 10,
+      "frame_count": 50,
+      "height": 240,
+      "md5": "f68ea710016d177959decdfe722bc8b5",
+      "mime_type": "video/mp4",
+      "modified": "2026-10-08 23:15:17",
+      "mutagen_extra": {
+        "bitrate": "0",
+        "channels": "0",
+        "codec": "",
+        "codec_description": "",
+        "length": "5.0",
+        "sample_rate": "0"
+      },
+      "mutagen_tags": {
+        "\u00a9too": "'Lavf61.7.100'"
+      },
+      "raw_strings": {
+        "RawStr@0x0001da94": "VideoHandler"
+      },
+      "sha256": "dff12660fa1efaea4628561695a8ff0452ae75e62bdf60ca306e3d05e3def888",
+      "width": 320
+    }
+  },
+  "frames_extracted": [],
+  "steganography_findings": [
+    {
+      "category": "embedded_signature",
+      "context": "GZIP-compressed data embedded in video is highly suspicious.",
+      "count": 1,
+      "description": "GZIP Data signature (0x1F8B) found at offset 0x1654A (91,466 bytes into file).",
+      "extension": "gz",
+      "file_type": "GZIP Data",
+      "magic_hex": "0x1F8B",
+      "offset": 91466,
+      "offsets": [
+        91466
+      ],
+      "recoverable": true,
+      "severity": "HIGH",
+      "type": "Embedded GZIP Data"
+    },
+    {
+      "category": "embedded_signature",
+      "context": "ZIP archives have no legitimate place inside a video stream.",
+      "count": 2,
+      "description": "2 ZIP Archive signatures (0x504B0304) detected at: 0x1E174, 0x1E1E9.",
+      "extension": "zip",
+      "file_type": "ZIP Archive",
+      "magic_hex": "0x504B0304",
+      "offset": 123252,
+      "offsets": [
+        123252,
+        123369
+      ],
+      "recoverable": true,
+      "severity": "HIGH",
+      "type": "Embedded ZIP Archive"
+    },
+    {
+      "category": "embedded_signature",
+      "context": "BMP image found inside video container.",
+      "count": 1,
+      "description": "BMP Image signature (0x424D) found at offset 0x11DE (4,574 bytes into file).",
+      "extension": "bmp",
+      "file_type": "BMP Image",
+      "magic_hex": "0x424D",
+      "offset": 4574,
+      "offsets": [
+        4574
+      ],
+      "recoverable": true,
+      "severity": "MEDIUM",
+      "type": "Embedded BMP Image"
+    },
+    {
+      "category": "signature_grouped",
+      "context": "MP3 audio frames are a standard component of video containers.",
+      "count": 37,
+      "description": "37 occurrences of MP3 Audio Frame (0xFFFB) found throughout the file. Normal for audio tracks is \u226420; this high count may indicate frame-level data embedding.",
+      "extension": "mp3",
+      "file_type": "MP3 Audio Frame",
+      "magic_hex": "0xFFFB",
+      "offset": 5194,
+      "offsets": [
+        5194,
+        6053,
+        8846,
+        32001,
+        32611
+      ],
+      "recoverable": false,
+      "severity": "MEDIUM",
+      "type": "Abnormal Count: MP3 Audio Frame"
+    }
+  ],
+  "recovered_files": [],
+  "summary": {
+    "total_frames": 0,
+    "steg_total": 4,
+    "steg_high": 2,
+    "steg_medium": 2,
+    "recovered_count": 0
+  },
+  "chain_of_custody": {
+    "md5": "f68ea710016d177959decdfe722bc8b5",
+    "sha256": "dff12660fa1efaea4628561695a8ff0452ae75e62bdf60ca306e3d05e3def888",
+    "analysis_timestamp": "2026-10-08T17:45:47.224886Z"
+  }
+}
