@@ -77,7 +77,7 @@ All listed in `requirements.txt`.
 
 ```bash
 # Clone from GitHub
-git clone https://github.com/musa42069/VideoAnalysisTool.git
+git clone https://github.com/anaya2006/CSDF-Miniproject.git
 cd VideoAnalysisTool
 
 # OR if you received a ZIP
